@@ -4,7 +4,7 @@ Plugin Name: Show Article Map
 Plugin URI: https://www.naenote.net/entry/show-article-map
 Description: Visualize internal link between posts
 Author: NAE
-Version: 0.1
+Version: 0.2
 Author URI: https://www.naenote.net/entry/show-article-map
 License: GPL2
 */
@@ -38,27 +38,44 @@ function nae_insert_str($text, $insert, $num){
 }
 
 function nae_get_dataset (){
-    $args = array(
+    $args_post = [
         'posts_per_page' => -1,
         'post_type'        => 'post',
         'post_status'      => 'publish'
-    );
-    $post_array = get_posts( $args );
+    ];
+    $args_page = [
+        'posts_per_page' => -1,
+        'post_type'        => 'page',
+        'post_status'      => 'publish'
+    ];
+    $post_array = get_posts( $args_post );
+    $page_array = get_pages( $args_page );
+    $articles = array_merge($post_array, $page_array);
     $nodes = [];
     $edges = [];
 
-    foreach ($post_array as $post) {
+    foreach ($articles as $post) {
         $category = get_the_category($post->ID);
-        $root_category_ID = array_pop(get_ancestors( $category[0]->cat_ID, 'category' ));
+        
+        // print($post->post_name ."|". $category[0]->cat_ID."<br>");
+        $ancestors_cat_IDs = get_ancestors( $category[0]->cat_ID, 'category' );
+        if(empty($ancestors_cat_IDs)) {
+            $root_category_ID = $category[0]->cat_ID;
+        } else {
+            $root_category_ID = array_pop($ancestors_cat_IDs);
+        }
         $root_category = get_category($root_category_ID);
+        $group_name = !empty($category) ? $root_category->slug : "dummycatforpages";
 
         $nodes[] = [
             'id' => $post->ID,
             'label' => nae_insert_str(urldecode($post->post_name), "\r\n", 20),
-            'group' => urldecode($root_category->slug),
+            'group' => urldecode($group_name),
             'title' => '<a href="'.get_permalink($post).'" target="_blank">'.$post->post_title.'</a>'
         ];
-        $html = do_shortcode($post->post_content);
+        $post_content = str_replace("[show_article_map]","",$post->post_content); 
+        $html = apply_filters( 'the_content', $post_content );
+
         $dom = new DOMDocument;
         @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
         $xpath = new DOMXPath($dom);
@@ -86,10 +103,11 @@ function nae_get_dataset (){
 function nae_echo_article_map(){
     $dataset = nae_get_dataset ();
     $body = <<<EOD
-    <div id="searchnode">
+    <div id="manipulationspace">
       <label for="searchnodequery">Search by node name</label>
-      <input id="searchnodequery" name="searchnodequery" size="30" type="text">
+      <input id="searchnodequery" name="searchnodequery" size="30" style="display:inline;width:50% !important;" type="text">
       <button id="searchnodebutton" type="submit">Search</button>
+      <button id="deletepagebutton" type="submit">Remove Pages</button>
     </div>
     <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
     <div>
@@ -147,6 +165,15 @@ function nae_echo_article_map(){
           if(e.which == 13){//Enter key pressed
             jQuery('#searchnodebutton').click();//Trigger search button click event
           }
+        });
+        jQuery('#deletepagebutton').click(function(){
+          // serch nodes by group ID
+          var hitNodes = nodes.get({
+            filter:function(item){
+              return item.group.indexOf("dummycatforpages") != -1;
+            }
+          });
+          nodes.remove(hitNodes);
         });
     </script>
     </div>
