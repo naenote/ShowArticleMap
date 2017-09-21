@@ -4,7 +4,7 @@ Plugin Name: Show Article Map
 Plugin URI: https://www.naenote.net/entry/show-article-map
 Description: Visualize internal link between posts
 Author: NAE
-Version: 0.2
+Version: 0.3
 Author URI: https://www.naenote.net/entry/show-article-map
 License: GPL2
 */
@@ -65,7 +65,7 @@ function nae_get_dataset (){
             $root_category_ID = array_pop($ancestors_cat_IDs);
         }
         $root_category = get_category($root_category_ID);
-        $group_name = !empty($category) ? $root_category->slug : "dummycatforpages";
+        $group_name = !empty($category) ? $root_category->slug : "固定ページ";
 
         $nodes[] = [
             'id' => $post->ID,
@@ -103,79 +103,91 @@ function nae_get_dataset (){
 function nae_echo_article_map(){
     $dataset = nae_get_dataset ();
     $body = <<<EOD
-    <div id="manipulationspace">
-      <label for="searchnodequery">Search by node name</label>
-      <input id="searchnodequery" name="searchnodequery" size="30" style="display:inline;width:50% !important;" type="text">
-      <button id="searchnodebutton" type="submit">Search</button>
-      <button id="deletepagebutton" type="submit">Remove Pages</button>
-    </div>
-    <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
     <div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.css" rel="stylesheet">
-    <script type="text/javascript">
-        var dataset = $dataset;
-        var nodedata = dataset[0];
-        var edgedata = dataset[1];
-        // create an array with nodes
-        var nodes = new vis.DataSet(nodedata);
-        // create an array with edges
-        var edges = new vis.DataSet(edgedata);
-        // create a network
-        var container = document.getElementById('mynetwork');
-        // provide the data in the vis format
-        data = {  nodes: nodes, edges: edges };
-        var options = {
-            nodes:{shape:"box"},
-            edges:{arrows: {to:{enabled: true, scaleFactor:1, type:'arrow'}}},
-            manipulation:{enabled:true},
-         };
-         
-        // initialize your network!
-        var network = new vis.Network(container, data, options);
-        
-        // double click node to open an article
-        network.on('doubleClick', function(e){
-            var nodeID = e.nodes.toString();
-            var url = jQuery(data.nodes.get(nodeID)['title']).attr('href');
-            //console.log(jQuery(data.nodes.get(nodeID)['title'])); console.log(url);
-            window.open(url,'_blank');
-        });
-        
-        // search node label by query
-        jQuery('#searchnodebutton').click(function(){
-          var search = jQuery('#searchnodequery').val();
-
-          // serch nodes by node label
-          var hitNodes = nodes.get({
-            filter:function(item){
-              var label = item.label.replace("\\r\\n","");
-              return label.indexOf(search) != -1;
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.js"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.css" rel="stylesheet">
+        <div id="manipulationspace">
+            <div>
+                <label for="searchnodequery">Search by node name</label>
+                <input id="searchnodequery" name="searchnodequery" size="30" style="display:inline;width:50% !important;" type="text">
+                <button id="searchnodebutton" type="submit">Search</button>
+             </div>
+             <div>
+                <label for="groupList">Toggle category / pages</label>
+                <div id="groupList"></div>
+             </div>
+        </div>
+        <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
+        <script type="text/javascript">
+            var dataset = $dataset;
+            var nodedata = dataset[0];
+            var edgedata = dataset[1];
+            // create an array with nodes
+            var nodes = new vis.DataSet(nodedata);
+            // create an array with edges
+            var edges = new vis.DataSet(edgedata);
+            // create a network
+            var container = document.getElementById('mynetwork');
+            // provide the data in the vis format
+            data = {  nodes: nodes, edges: edges };
+            var options = {
+                nodes:{shape:"box"},
+                edges:{arrows: {to:{enabled: true, scaleFactor:1, type:'arrow'}}},
+                manipulation:{enabled:true},
+             };
+             
+            // initialize your network!
+            var network = new vis.Network(container, data, options);
+            
+            // double click node to open an article
+            network.on('doubleClick', function(e){
+                var nodeID = e.nodes.toString();
+                var url = jQuery(data.nodes.get(nodeID)['title']).attr('href');
+                //console.log(jQuery(data.nodes.get(nodeID)['title'])); console.log(url);
+                window.open(url,'_blank');
+            });
+            
+            // search node label by query
+            jQuery('#searchnodebutton').click(function(){
+              var search = jQuery('#searchnodequery').val();
+    
+              // serch nodes by node label
+              var hitNodes = nodes.get({
+                filter:function(item){
+                  var label = item.label.replace("\\r\\n","");
+                  return label.indexOf(search) != -1;
+                }
+              });
+              var hitNodeIDs = [];
+              for (i=0;i<hitNodes.length;i++) {
+                hitNodeIDs.push(hitNodes[i].id);
+              };
+    
+              // select
+              network.selectNodes(hitNodeIDs);
+            });
+            jQuery('#searchnodequery').keypress(function(e){
+              if(e.which == 13){//Enter key pressed
+                jQuery('#searchnodebutton').click();//Trigger search button click event
+              }
+            });
+            
+            //initialize group list
+            var groupList = nodes.distinct('group').sort();
+            for(var i=0; i<groupList.length; i++){
+                jQuery('#groupList').append('<input type="checkbox" name="visibleGroups" value="'+groupList[i]+'" checked="checked" style="margin-left:15px;">'+groupList[i]);
             }
-          });
-          var hitNodeIDs = [];
-          for (i=0;i<hitNodes.length;i++) {
-            hitNodeIDs.push(hitNodes[i].id);
-          };
-
-          // select
-          network.selectNodes(hitNodeIDs);
-        });
-        jQuery('#searchnodequery').keypress(function(e){
-          if(e.which == 13){//Enter key pressed
-            jQuery('#searchnodebutton').click();//Trigger search button click event
-          }
-        });
-        jQuery('#deletepagebutton').click(function(){
-          // serch nodes by group ID
-          var hitNodes = nodes.get({
-            filter:function(item){
-              return item.group.indexOf("dummycatforpages") != -1;
-            }
-          });
-          nodes.remove(hitNodes);
-        });
-    </script>
+            
+            //filter by group
+            jQuery('#groupList>input').on('change',function(e){
+                var visibleGroups = [];
+                jQuery("#groupList :checkbox:checked").each(function(){
+                   visibleGroups.push(this.value);
+                });
+                var filtered = nodes.get({filter:function(item){return visibleGroups.indexOf(item.group) >= 0;}});
+                network.setData({nodes:filtered,edges:edges});
+            });
+        </script>
     </div>
 EOD;
     return $body;
