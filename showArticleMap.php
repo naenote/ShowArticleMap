@@ -108,13 +108,17 @@ function nae_echo_article_map(){
         <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.css" rel="stylesheet">
         <div id="manipulationspace">
             <div>
-                <label for="searchnodequery">Search by node name</label>
+                <label for="searchnodequery">Search by node name : </label>
                 <input id="searchnodequery" name="searchnodequery" size="30" style="display:inline;width:50% !important;" type="text">
                 <button id="searchnodebutton" type="submit">Search</button>
              </div>
              <div>
-                <label for="groupList">Toggle category / pages</label>
-                <div id="groupList"></div>
+                <label for="groupList">Toggle category / pages : </label>
+                <span id="groupList"></span>
+             </div>
+             <div>
+                <label for="toggleBlur">Toggle Blur : </label>
+                <button id="togglepBlur" type="submit">Stop</button>
              </div>
         </div>
         <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
@@ -148,7 +152,7 @@ function nae_echo_article_map(){
             });
             
             // search node label by query
-            jQuery('#searchnodebutton').click(function(){
+            jQuery('#searchnodebutton').on('click',function(){
               var search = jQuery('#searchnodequery').val();
     
               // serch nodes by node label
@@ -178,14 +182,43 @@ function nae_echo_article_map(){
                 jQuery('#groupList').append('<input type="checkbox" name="visibleGroups" value="'+groupList[i]+'" checked="checked" style="margin-left:15px;">'+groupList[i]);
             }
             
-            //filter by group
-            jQuery('#groupList>input').on('change',function(e){
-                var visibleGroups = [];
+            // prepare node data by group
+            var nodeGroups = [];
+            for(var i=0;i<groupList.length;i++){
+                nodeGroups[groupList[i]] = nodes.get({filter:function(item){return item.group == groupList[i]; }});
+            }
+            
+            // apply group change
+            jQuery('#groupList>input').on('change',function(){
+                var currentGroupNames = nodes.distinct('group');
+                var visibleGroupNames = [];
                 jQuery("#groupList :checkbox:checked").each(function(){
-                   visibleGroups.push(this.value);
+                   visibleGroupNames.push(this.value);
                 });
-                var filtered = nodes.get({filter:function(item){return visibleGroups.indexOf(item.group) >= 0;}});
-                network.setData({nodes:filtered,edges:edges});
+                // console.log("visibleGroupNames:"+visibleGroupNames);
+                var diffGroupNames = diffArray(currentGroupNames,visibleGroupNames);
+                if(currentGroupNames.length < visibleGroupNames.length){
+                    for(i=0;i<diffGroupNames.length;i++){
+                        nodes.add(nodeGroups[diffGroupNames[i]]);
+                    }
+                } else if (currentGroupNames.length > visibleGroupNames.length) {
+                     for(i=0;i<diffGroupNames.length;i++){
+                        nodes.remove(nodeGroups[diffGroupNames[i]]);
+                    }
+                } else {
+                    
+                }
+            });
+            function diffArray(arr1, arr2) {
+              return arr1.concat(arr2).filter(item => !arr1.includes(item) || !arr2.includes(item));
+            }
+            
+            // toggle physics
+            jQuery('#togglepBlur').on('click', function(){
+                var physicsEnabled = network.physics.options.enabled;
+                var buttonText = physicsEnabled ? "Start" : "Stop";
+                network.setOptions({physics:{enabled:!physicsEnabled}});
+                jQuery(this).text(buttonText);
             });
         </script>
     </div>
