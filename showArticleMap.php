@@ -4,12 +4,12 @@ Plugin Name: Show Article Map
 Plugin URI: https://www.naenote.net/entry/show-article-map
 Description: Visualize internal link between posts
 Author: NAE
-Version: 0.3
+Version: 0.5
 Author URI: https://www.naenote.net/entry/show-article-map
 License: GPL2
 */
 
-/*  Copyright 2017 NAE (email : @__NAE__)
+/*  Copyright 2017 NAE (email : @naenotenet)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as
@@ -25,6 +25,7 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+if (!function_exiss('nae_insert_str')):
 function nae_insert_str($text, $insert, $num)
 {
     $returnText = $text;
@@ -37,7 +38,9 @@ function nae_insert_str($text, $insert, $num)
 
     return $returnText;
 }
+endif;
 
+if (!function_exiss('nae_get_dataset')):
 function nae_get_dataset()
 {
     $args_post = [
@@ -100,12 +103,16 @@ function nae_get_dataset()
 
     return '['.json_encode($nodes).','.json_encode($edges).']';
 }
+endif;
 
+if (!function_exiss('nae_echo_article_map')):
 function nae_echo_article_map()
 {
     $dataset = nae_get_dataset();
+    $js_path = plugins_url('showArticleMap.js', __FILE__);
     $body = <<<EOD
     <div>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.js"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.css" rel="stylesheet">
         <div id="manipulationspace">
@@ -126,105 +133,13 @@ function nae_echo_article_map()
         <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
         <script type="text/javascript">
             var dataset = $dataset;
-            var nodedata = dataset[0];
-            var edgedata = dataset[1];
-            // create an array with nodes
-            var nodes = new vis.DataSet(nodedata);
-            // create an array with edges
-            var edges = new vis.DataSet(edgedata);
-            // create a network
-            var container = document.getElementById('mynetwork');
-            // provide the data in the vis format
-            data = {  nodes: nodes, edges: edges };
-            var options = {
-                nodes:{shape:"box"},
-                edges:{arrows: {to:{enabled: true, scaleFactor:1, type:'arrow'}}},
-                manipulation:{enabled:true},
-             };
-             
-            // initialize your network!
-            var network = new vis.Network(container, data, options);
-            
-            // double click node to open an article
-            network.on('doubleClick', function(e){
-                var nodeID = e.nodes.toString();
-                var url = jQuery(data.nodes.get(nodeID).title).attr('href');
-                window.open(url,'_blank');
-            });
-            
-            // search node label by query
-            jQuery('#searchnodebutton').on('click',function(){
-              var search = jQuery('#searchnodequery').val();
-    
-              // serch nodes by node label
-              var hitNodes = nodes.get({
-                filter:function(item){
-                  var label = item.label.replace("\\r\\n","");
-                  return label.indexOf(search) != -1;
-                }
-              });
-              var hitNodeIDs = [];
-              for (i=0;i<hitNodes.length;i++) {
-                hitNodeIDs.push(hitNodes[i].id);
-              };
-    
-              // select
-              network.selectNodes(hitNodeIDs);
-            });
-            jQuery('#searchnodequery').keypress(function(e){
-              if(e.which == 13){//Enter key pressed
-                jQuery('#searchnodebutton').click();//Trigger search button click event
-              }
-            });
-            
-            //initialize group list
-            var groupList = nodes.distinct('group').sort();
-            for(var i=0; i<groupList.length; i++){
-                jQuery('#groupList').append('<input type="checkbox" name="visibleGroups" value="'+groupList[i]+'" checked="checked" style="margin-left:15px;">'+groupList[i]);
-            }
-            
-            // prepare node data by group
-            var nodeGroups = [];
-            for(var i=0;i<groupList.length;i++){
-                nodeGroups[groupList[i]] = nodes.get({filter:function(item){return item.group == groupList[i]; }});
-            }
-            
-            // apply group change
-            jQuery('#groupList>input').on('change',function(){
-                var currentGroupNames = nodes.distinct('group');
-                var visibleGroupNames = [];
-                jQuery("#groupList :checkbox:checked").each(function(){
-                   visibleGroupNames.push(this.value);
-                });
-                var diffGroupNames = diffArray(currentGroupNames,visibleGroupNames);
-                if(currentGroupNames.length < visibleGroupNames.length){
-                    for(i=0;i<diffGroupNames.length;i++){
-                        nodes.add(nodeGroups[diffGroupNames[i]]);
-                    }
-                } else if (currentGroupNames.length > visibleGroupNames.length) {
-                     for(i=0;i<diffGroupNames.length;i++){
-                        nodes.remove(nodeGroups[diffGroupNames[i]]);
-                    }
-                } else {
-                    
-                }
-            });
-            function diffArray(arr1, arr2) {
-              return arr1.concat(arr2).filter(item => !arr1.includes(item) || !arr2.includes(item));
-            }
-            
-            // toggle physics
-            jQuery('#togglepBlur').on('click', function(){
-                var physicsEnabled = network.physics.options.enabled;
-                var buttonText = physicsEnabled ? "Start" : "Stop";
-                network.setOptions({physics:{enabled:!physicsEnabled}});
-                jQuery(this).text(buttonText);
-            });
         </script>
+        <script src="$js_path"></script>
     </div>
 EOD;
 
     return $body;
 }
+endif;
 
 add_shortcode('show_article_map', 'nae_echo_article_map');
