@@ -25,7 +25,7 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-if (!function_exiss('nae_insert_str')):
+if (!function_exists('nae_insert_str')):
 function nae_insert_str($text, $insert, $num)
 {
     $returnText = $text;
@@ -40,7 +40,7 @@ function nae_insert_str($text, $insert, $num)
 }
 endif;
 
-if (!function_exiss('nae_get_dataset')):
+if (!function_exists('nae_get_dataset')):
 function nae_get_dataset()
 {
     $args_post = [
@@ -105,7 +105,7 @@ function nae_get_dataset()
 }
 endif;
 
-if (!function_exiss('nae_echo_article_map')):
+if (!function_exists('nae_echo_article_map')):
 function nae_echo_article_map()
 {
     $dataset = nae_get_dataset();
