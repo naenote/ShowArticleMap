@@ -1,9 +1,10 @@
+var dataset = JSON.parse(eval("jQuery('#show-article-map-dataset').text()"));
 var nodedata = dataset[0];
 var edgedata = dataset[1];
 var nodes = new vis.DataSet(nodedata);
 var edges = new vis.DataSet(edgedata);
 var container = document.getElementById('mynetwork');
-data = { nodes: nodes, edges: edges };
+var data = { nodes: nodes, edges: edges };
 var options = {
     nodes: { shape: "box" },
     edges: { arrows: { to: { enabled: true, scaleFactor: 1, type: 'arrow' } } },
