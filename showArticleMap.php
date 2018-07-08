@@ -109,6 +109,7 @@ if (!function_exists('nae_echo_article_map')):
 function nae_echo_article_map()
 {
     $dataset = nae_get_dataset();
+    $dataset = htmlspecialchars($dataset);
     $js_path = plugins_url('showArticleMap.js', __FILE__);
     $body = <<<EOD
     <div>
@@ -131,9 +132,7 @@ function nae_echo_article_map()
              </div>
         </div>
         <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
-        <script type="text/javascript">
-            var dataset = $dataset;
-        </script>
+        <div id="show-article-map-dataset" style="display:none;">$dataset</div>
         <script src="$js_path"></script>
     </div>
 EOD;
