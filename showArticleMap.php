@@ -4,7 +4,7 @@ Plugin Name: Show Article Map
 Plugin URI: https://www.naenote.net/entry/show-article-map
 Description: Visualize internal link between posts
 Author: NAE
-Version: 0.7
+Version: 0.
 Author URI: https://www.naenote.net/entry/show-article-map
 License: GPL2
 */
