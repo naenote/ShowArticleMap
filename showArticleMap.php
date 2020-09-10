@@ -4,7 +4,7 @@ Plugin Name: Show Article Map
 Plugin URI: https://www.naenote.net/entry/show-article-map
 Description: Visualize internal link between posts
 Author: NAE
-Version: 0.
+Version: 0.8
 Author URI: https://www.naenote.net/entry/show-article-map
 License: GPL2
 */
@@ -72,7 +72,7 @@ function nae_get_dataset()
 
         $nodes[] = [
             'id' => $post->ID,
-            'label' => nae_insert_str(urldecode($post->ID.':'.$post->post_name), "\r\n", 20),
+            'label' => nae_insert_str(urldecode($post->ID.':'.$post->post_name), "\n", 20),
             'group' => urldecode($group_name),
             'title' => '<a href="'.get_permalink($post).'" target="_blank">'.$post->post_title.'</a>',
         ];
