@@ -101,11 +101,11 @@ jQuery('#downloadCSV').on('click', function() {
       fromNode['id'] + ',' +
       fromNode['title'].match(/href="(.+?)"/)[1] + ',' +
       fromNode['group'] + ',' +
-      fromNode['label'].replace('\r\n|\r|\n', '') + ',' +
+      fromNode['label'].replace('/\n/g', '') + ',' +
       toNode['id'] + ',' +
       toNode['title'].match(/href="(.+?)"/)[1] + ',' +
       toNode['group'] + ',' +
-      toNode['label'].replace('\r\n|\r|\n', '') + '\n';
+      toNode['label'].replace('/\n/g', '') + '\n';
   });
 
   //download
