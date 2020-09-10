@@ -4,7 +4,7 @@ Plugin Name: Show Article Map
 Plugin URI: https://www.naenote.net/entry/show-article-map
 Description: Visualize internal link between posts
 Author: NAE
-Version: 0.5
+Version: 0.7
 Author URI: https://www.naenote.net/entry/show-article-map
 License: GPL2
 */
@@ -132,6 +132,7 @@ function nae_echo_article_map()
              </div>
         </div>
         <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
+        <div><a id='downloadCSV' href='#' download="ShowArticleMap.csv">Download CSV</a></div>
         <div id="show-article-map-dataset" style="display:none;">$dataset</div>
         <script src="$js_path"></script>
     </div>
