@@ -4,7 +4,7 @@ Plugin Name: Show Article Map
 Plugin URI: https://www.naenote.net/entry/show-article-map
 Description: Visualize internal link between posts
 Author: NAE
-Version: 0.8
+Version: 0.9
 Author URI: https://www.naenote.net/entry/show-article-map
 License: GPL2
 */
@@ -105,41 +105,55 @@ function nae_get_dataset()
 }
 endif;
 
-if (!function_exists('nae_echo_article_map')):
-function nae_echo_article_map()
+if (!function_exists('nae_render_article_map')):
+function nae_render_article_map($attributes, $content)
 {
     $dataset = nae_get_dataset();
     $dataset = htmlspecialchars($dataset);
     $js_path = plugins_url('showArticleMap.js', __FILE__);
-    $body = <<<EOD
+
+    wp_enqueue_script('vis-js', 'https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.js', [], '4.20.0', true);
+    wp_enqueue_style('vis-css', 'https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.css', [], '4.20.0');
+    wp_enqueue_script('show-article-map-front', $js_path, ['jquery', 'vis-js'], '0.9', true);
+
+    ob_start();
+    ?>
     <div>
-        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.js"></script>
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.20.0/vis.min.css" rel="stylesheet">
         <div id="manipulationspace">
             <div>
                 <label for="searchnodequery">Search by node name : </label>
                 <input id="searchnodequery" name="searchnodequery" size="30" style="display:inline;width:50% !important;" type="text">
                 <button id="searchnodebutton" type="submit">Search</button>
-             </div>
-             <div>
+            </div>
+            <div>
                 <label for="groupList">Toggle category / pages : </label>
                 <span id="groupList"></span>
-             </div>
-             <div>
+            </div>
+            <div>
                 <label for="toggleBlur">Toggle Blur : </label>
                 <button id="togglepBlur" type="submit">Stop</button>
-             </div>
+            </div>
         </div>
         <div id="mynetwork" style="width: 100%; height: 800px; border: 1px solid lightgray;"></div>
         <div><a id='downloadCSV' href='#' download="ShowArticleMap.csv">Download CSV</a></div>
-        <div id="show-article-map-dataset" style="display:none;">$dataset</div>
-        <script src="$js_path"></script>
+        <div id="show-article-map-dataset" style="display:none;"><?php echo $dataset; ?></div>
     </div>
-EOD;
-
-    return $body;
+    <?php
+    return ob_get_clean();
 }
 endif;
 
-add_shortcode('show_article_map', 'nae_echo_article_map');
+if (!function_exists('nae_register_block')):
+function nae_register_block()
+{
+    register_block_type(
+        __DIR__ . '/block.json',
+        ['render_callback' => 'nae_render_article_map']
+    );
+}
+endif;
+add_action('init', 'nae_register_block');
+
+add_shortcode('show_article_map', function () {
+    return nae_render_article_map([], '');
+});

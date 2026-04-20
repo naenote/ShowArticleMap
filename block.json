@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "show-article-map/article-map",
+  "version": "0.9.0",
+  "title": "Show Article Map",
+  "category": "widgets",
+  "description": "Visualize internal links between posts as an interactive network graph.",
+  "textdomain": "show-article-map",
+  "editorScript": "file:./build/index.js"
+}
